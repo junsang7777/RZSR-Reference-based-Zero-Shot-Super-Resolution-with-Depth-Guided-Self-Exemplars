@@ -4,6 +4,5 @@
 
 Set dir : img (Gaussian blurred img) , dep (Adabins depth estimation result) , ker ( KernelGAN estimation result)
 
-Set_result dir : RZSR's Set5 & Set14 result
-
-hist_result dir : RZSR's historical image result
+### Historical Comaparision
+RZSR : ![img007_RZSR](https://user-images.githubusercontent.com/37012124/154196352-24e728e0-c8e2-41c7-93d4-b230ac774851.png)
