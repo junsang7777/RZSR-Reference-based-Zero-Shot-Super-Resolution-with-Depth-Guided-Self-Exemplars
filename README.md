@@ -20,6 +20,9 @@ with Similarity-Aware Deformable Convolution](https://openaccess.thecvf.com/cont
 [Image Super-Resolution with Cross-Scale Non-Local Attention
 and Exhaustive Self-Exemplars Mining](https://openaccess.thecvf.com/content_CVPR_2020/papers/Mei_Image_Super-Resolution_With_Cross-Scale_Non-Local_Attention_and_Exhaustive_Self-Exemplars_Mining_CVPR_2020_paper.pdf) | [git](https://github.com/SHI-Labs/Cross-Scale-Non-Local-Attention)
 
+### Acknowledgment
+The code is based on [pytorch-ZSSR](https://github.com/HarukiYqM/pytorch-ZSSR)
+
 ### Citation
 ```
 @ARTICLE{9868165,
