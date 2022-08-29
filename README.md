@@ -11,6 +11,12 @@ Set dir : img (Gaussian blurred img) , dep (Adabins depth estimation result) , k
 
 ![NIMA](https://user-images.githubusercontent.com/37012124/154197367-abb6d02a-88a2-4c98-ba94-b12e688462d8.png)
 
+### Related Work
+[“Zero-Shot” Super-Resolution using Deep Internal Learning](https://openaccess.thecvf.com/content_cvpr_2018/papers/Shocher_Zero-Shot_Super-Resolution_Using_CVPR_2018_paper.pdf) | [git](https://github.com/assafshocher/ZSSR)
+[Robust Reference-based Super-Resolution
+with Similarity-Aware Deformable Convolution](https://openaccess.thecvf.com/content_CVPR_2020/papers/Shim_Robust_Reference-Based_Super-Resolution_With_Similarity-Aware_Deformable_Convolution_CVPR_2020_paper.pdf)
+[Image Super-Resolution with Cross-Scale Non-Local Attention
+and Exhaustive Self-Exemplars Mining](https://openaccess.thecvf.com/content_CVPR_2020/papers/Mei_Image_Super-Resolution_With_Cross-Scale_Non-Local_Attention_and_Exhaustive_Self-Exemplars_Mining_CVPR_2020_paper.pdf) | [git](https://github.com/SHI-Labs/Cross-Scale-Non-Local-Attention)
 
 ### Citation
 ```
