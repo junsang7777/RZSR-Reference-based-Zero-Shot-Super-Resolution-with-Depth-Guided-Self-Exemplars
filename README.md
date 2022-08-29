@@ -23,7 +23,7 @@ and Exhaustive Self-Exemplars Mining](https://openaccess.thecvf.com/content_CVPR
 ### Acknowledgment
 The code is based on [pytorch-ZSSR](https://github.com/HarukiYqM/pytorch-ZSSR)
 
-### Citation
+### Citation (Early access)
 ```
 @ARTICLE{9868165,
     author={Yoo, Jun-Sang and Kim, Dong-Wook and Lu, Yucheng and Jung, Seung-Won},
