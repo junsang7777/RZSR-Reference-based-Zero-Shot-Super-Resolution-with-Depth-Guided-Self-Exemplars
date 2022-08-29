@@ -6,6 +6,10 @@
 
 Set dir : img (Gaussian blurred img) , dep (Adabins depth estimation result) , ker ( KernelGAN estimation result)
 
+### Framework
+![framework]()
+
+---
 ### Historical Comaparision
 ![aaaaaa](https://user-images.githubusercontent.com/37012124/154197375-8e7b42ed-abbc-4067-925f-f325d5fbf27b.png)
 
