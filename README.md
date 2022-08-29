@@ -11,9 +11,8 @@ Set dir : img (Gaussian blurred img) , dep (Adabins depth estimation result) , k
 
 ---
 ### Historical Comaparision
-![aaaaaa](https://user-images.githubusercontent.com/37012124/154197375-8e7b42ed-abbc-4067-925f-f325d5fbf27b.png)
 
-![NIMA](https://user-images.githubusercontent.com/37012124/154197367-abb6d02a-88a2-4c98-ba94-b12e688462d8.png)
+![NIMA](https://user-images.githubusercontent.com/37012124/154197367-abb6d02a-88a2-4c98-ba94-b12e688462d8.png)<img src="https://user-images.githubusercontent.com/37012124/154197367-abb6d02a-88a2-4c98-ba94-b12e688462d8.png" width="700" height="370">
 
 ### Related Work
 [“Zero-Shot” Super-Resolution using Deep Internal Learning](https://openaccess.thecvf.com/content_cvpr_2018/papers/Shocher_Zero-Shot_Super-Resolution_Using_CVPR_2018_paper.pdf) | [git](https://github.com/assafshocher/ZSSR)
