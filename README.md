@@ -13,12 +13,12 @@ Set dir : img (Gaussian blurred img) , dep (Adabins depth estimation result) , k
 
 
 ### Citation
-''' @ARTICLE{9868165,
-  author={Yoo, Jun-Sang and Kim, Dong-Wook and Lu, Yucheng and Jung, Seung-Won},
-  journal={IEEE Transactions on Multimedia}, 
-  title={RZSR: Reference-based Zero-Shot Super-Resolution with Depth Guided Self-Exemplars}, 
-  year={2022},
-  volume={},
-  number={},
-  pages={1-13},
-  doi={10.1109/TMM.2022.3202018}} '''
+  @ARTICLE{9868165,
+    author={Yoo, Jun-Sang and Kim, Dong-Wook and Lu, Yucheng and Jung, Seung-Won},
+    journal={IEEE Transactions on Multimedia}, 
+    title={RZSR: Reference-based Zero-Shot Super-Resolution with Depth Guided Self-Exemplars}, 
+    year={2022},
+    volume={},
+    number={},
+    pages={1-13},
+    doi={10.1109/TMM.2022.3202018}}
