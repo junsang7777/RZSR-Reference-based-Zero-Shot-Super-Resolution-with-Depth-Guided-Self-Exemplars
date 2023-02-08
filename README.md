@@ -2,9 +2,28 @@
 
 ## [Arxiv](https://arxiv.org/abs/2208.11313) | [IEEE Transactions on Multimedia](https://ieeexplore.ieee.org/document/9868165)
 
-## Code Comming soon
+## Dependencies
+* Python=3.7
+* PyTorch
+* opencv-python
+* scikit-image(skimage)
 
-Set dir : img (Gaussian blurred img) , dep (Adabins depth estimation result) , ker ( KernelGAN estimation result)
+## Code
+Clone this repository into any place you want.
+'''python
+    git clone 
+    cd RZSR
+'''
+
+## Demo
+You can test our SR algorithm with your images. Place your image in "set" folder. (img - RGB, dep - Depth, ker - Kernel)
+'''python
+    python main.py
+'''
+
+
+---
+Set dir : img (Random gaussian blurred img) , dep (Adabins depth estimation result) , ker ( KernelGAN estimation result)
 
 ### Framework
 ![framework](https://user-images.githubusercontent.com/37012124/187117833-38ad62e7-cd89-4166-a2b0-6767082b1016.png)
