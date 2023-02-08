@@ -29,6 +29,8 @@ You can get the depth & kernel of the images from the repository as follows: Dep
 ---
 Set dir : img (Random gaussian blurred img) , dep (Adabins depth estimation result) , ker ( KernelGAN estimation result)
 
+hyper-parmeter : hitogram_threshold & Number of BINs & configs.py etc...
+
 ### Framework
 ![framework](https://user-images.githubusercontent.com/37012124/187117833-38ad62e7-cd89-4166-a2b0-6767082b1016.png)
 
