@@ -14,15 +14,15 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 conf = configs.Config()
 res_dir = prepare_result_dir(conf)
 
-files = [file_path for file_path in glob.glob('../set/img/*.png')]
+files = [file_path for file_path in glob.glob('./set/img/*.png')]
 #depths = [depth_path for depth_path in glob.glob('./set14_test/*.jpeg')]
 #files = [file_path for file_path in glob.glob('../RGB_OUT/*.png')]
-depths = [depth_path for depth_path in glob.glob('../set/dep/*.png')]
+depths = [depth_path for depth_path in glob.glob('./set/dep/*.png')]
 files = sorted(files)
 depths = sorted(depths)
 
 Kernel_switch = False
-kernels_ = [kernel_path for kernel_path in glob.glob('../set/ker/*.mat')]
+kernels_ = [kernel_path for kernel_path in glob.glob('./set/ker/*.mat')]
 kernels_ = sorted(kernels_)
 #gimgs = [g_path for g_path in glob.glob('../RGB/*.png')]
 #gimgs = sorted(gimgs)
