@@ -10,16 +10,19 @@
 
 ## Code
 Clone this repository into any place you want.
-'''python
-    git clone 
+
+```python
+    git clone https://github.com/junsang7777/RZSR.git 
     cd RZSR
-'''
+```
 
 ## Demo
 You can test our SR algorithm with your images. Place your image in "set" folder. (img - RGB, dep - Depth, ker - Kernel)
-'''python
+You can get the depth & kernel of the images from the repository as follows: [monodepth2](https://github.com/nianticlabs/monodepth2) [Adabins](https://github.com/shariqfarooq123/AdaBins) [KernelGAN](https://github.com/sefibk/KernelGAN)
+
+```python
     python main.py
-'''
+```
 
 
 ---
