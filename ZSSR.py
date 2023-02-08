@@ -20,47 +20,6 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 
-def Add_jpg_compression(img):
-    quality_std = np.random.randint(6)
-    img = img*255.0
-    img = np.around(img)
-    img = img.clip(0,255)
-    img=img.astype(np.uint8)
-
-    # encode param image quality 0 to 100. default:95
-    # if you want to shrink data size, choose low image quality.
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 84 + quality_std]
-
-    result, encimg = cv2.imencode('a.jpg', img, encode_param)
-    if False==result:
-        print('fuck')
-        quit()
-    decimg = cv2.imdecode(encimg, 1)
-    decimg = decimg.astype(np.float32)
-    decimg /= 255.
-    return decimg
-def distance(center_x,center_y, x,y, patch_size):
-    dist = np.sqrt((x-center_x)**2 + (y-center_y)**2)
-    max_dist = np.sqrt((patch_size/2)**2+(patch_size/2)**2)
-    return dist / max_dist
-def index_rot(y,x, shape_y, shape_x,rotation_var): # y,x (200, 100), y,x (25,39)
-    if rotation_var==0:
-        return y, x
-    elif rotation_var==1:
-        return x, shape_y-y-1
-    elif rotation_var == 2:
-        return shape_y-y-1, shape_x-x-1
-    elif rotation_var == 3:
-        return shape_x-x-1, y
-    elif rotation_var == 4:
-        return y, shape_x-x-1
-    elif rotation_var == 5:
-        return x, y
-    elif rotation_var == 6:
-        return shape_y-y-1, x
-    elif rotation_var == 7:
-        return shape_x-x-1, shape_y-y-1
-
 
 class ZSSR:
     # Basic current state variables initialization / declaration
@@ -131,7 +90,6 @@ class ZSSR:
             self.depth = input_depth if type(input_depth) is not str else(cv2.imread(input_depth, cv2.IMREAD_GRAYSCALE).astype(np.float32)/255.)
 
         self.shift = []
-        ###########################
         fake_width = self.www
         fake_height = self.hhh
         while(1):
@@ -148,7 +106,6 @@ class ZSSR:
         self.fake_depth = np.zeros((fake_height,fake_width),dtype=np.float64)
         self.fake_depth[:self.hhh,:self.www] = self.depth
 
-        ###########################
         self.Y = False
         if len(self.input) == 2: # is it gray? (never)
             self.Y = True
@@ -159,15 +116,6 @@ class ZSSR:
         # Preprocess the kernels. (see function to see what in includes).
         self.kernels = preprocess_kernels(kernels, conf)
 
-        ####################
-        """
-        ker = self.kernels[0]
-        ker[ker<0.05] = 0
-        print(np.sum(ker))
-        ker = ker/((np.sum(ker))+0.0000001)
-        self.kernels = [ker]
-        """
-        #######################
 
         # downsample kernel custom
         # Prepare TF default computational graph
@@ -391,93 +339,6 @@ class ZSSR:
         # Run network
         return np.clip(np.squeeze(self.model(interpolated_lr_son).cpu().detach().permute(0, 2, 3, 1).numpy()), 0, 1)
 
-    ###################
-    def forward_pass_ver21(self, lr_son, hr_father_shape=None, final_test_switch=True):
-        [M, N, _] = lr_son.shape
-        output = np.zeros((int(self.conf.scale_factors[0][1] * M), int(self.conf.scale_factors[0][0] * N), 3),dtype=np.float64)
-        divide = np.zeros((int(self.conf.scale_factors[0][1] * M), int(self.conf.scale_factors[0][0] * N), 3),dtype=np.float64)
-        ones = np.ones((self.conf.crop_size, self.conf.crop_size, 3))
-        for i in range(0, M, int(self.conf.crop_size/(2*self.conf.scale_factors[0][1]))-4):
-            for j in range(0, N, int(self.conf.crop_size/(2*self.conf.scale_factors[0][1]))-4):
-                if i + int(self.conf.crop_size/self.conf.scale_factors[0][1]) > M and j + int(self.conf.crop_size/self.conf.scale_factors[0][0]) > N:
-                    k = lr_son[M - int(self.conf.crop_size/self.conf.scale_factors[0][1]):M, N - int(self.conf.crop_size/self.conf.scale_factors[0][0]):N]
-                    yyyyy = int(M - int(self.conf.crop_size/(2*self.conf.scale_factors[0][1])))
-                    xxxxx = int(N - int(self.conf.crop_size/(2*self.conf.scale_factors[0][1])))
-                elif i + int(self.conf.crop_size/self.conf.scale_factors[0][0]) > M:
-                    k = lr_son[M - int(self.conf.crop_size/self.conf.scale_factors[0][0]):M, j:j + int(self.conf.crop_size/self.conf.scale_factors[0][1])]
-                    yyyyy = int(M - int(self.conf.crop_size/(2*self.conf.scale_factors[0][1])))
-                    xxxxx = int(j)
-                elif j + int(self.conf.crop_size/self.conf.scale_factors[0][1]) > N:
-                    k = lr_son[i:i + int(self.conf.crop_size/self.conf.scale_factors[0][1]), N - int(self.conf.crop_size/self.conf.scale_factors[0][0]):N]
-                    yyyyy = int(i)
-                    xxxxx = int(N - int(self.conf.crop_size/(2*self.conf.scale_factors[0][1])))
-                else:
-                    k = lr_son[i:i + int(self.conf.crop_size/self.conf.scale_factors[0][0]), j:j + int(self.conf.crop_size/self.conf.scale_factors[0][1])]
-                    yyyyy = int(i)
-                    xxxxx = int(j)
-                width_idx, height_idx, HARD_SWITCH = self.js_PM.test_run(xxxxx, yyyyy)
-                if HARD_SWITCH == False:
-                    ending_hegiht = int(height_idx + int(self.conf.crop_size/2))
-                    ending_width = int(width_idx + int(self.conf.crop_size/2))
-                    if height_idx + int(self.conf.crop_size/self.conf.scale_factors[0][1]) > lr_son.shape[0]:
-                        ending_hegiht = lr_son.shape[0]
-                    if width_idx + int(self.conf.crop_size/self.conf.scale_factors[0][0]) > lr_son.shape[1]:
-                        ending_width = lr_son.shape[1]
-
-
-                    if ending_width-self.conf.crop_size < 0 and ending_hegiht - self.conf.crop_size < 0 :
-                        patch = lr_son[0:self.conf.crop_size,0:self.conf.crop_size]
-                    elif ending_width-self.conf.crop_size >= 0 and ending_hegiht - self.conf.crop_size < 0 :
-                        patch = lr_son[0:self.conf.crop_size,ending_width-self.conf.crop_size:ending_width]
-                    elif ending_width - self.conf.crop_size < 0 and ending_hegiht - self.conf.crop_size >= 0:
-                        patch = lr_son[ending_hegiht-self.conf.crop_size:ending_hegiht,0:self.conf.crop_size]
-                    else :
-                        patch = lr_son[ending_hegiht-self.conf.crop_size:ending_hegiht,ending_width-self.conf.crop_size:ending_width]
-                    #patch = lr_son[ending_hegiht - 128:ending_hegiht, ending_width - 128:ending_width]
-                else :
-                    patch = imresize(k, scale_factor=self.sf, kernel=self.conf.upscale_method)
-                #patch = imresize(patch, scale_factor=1, kernel='cubic')
-                hr_cousin = patch
-
-                interpolated_lr_son = imresize(k, self.sf, (self.conf.crop_size, self.conf.crop_size), self.conf.upscale_method)
-                if final_test_switch == True:
-                    outputs = []
-                    for r in range(0, 1+7*self.conf.output_flip, 1):
-                        test_input = np.rot90(interpolated_lr_son, r) if r < 4 else np.fliplr(np.rot90(interpolated_lr_son, r))
-                        test_reference = np.rot90(hr_cousin, r) if r < 4 else np.fliplr(np.rot90(hr_cousin, r))
-                        test_input = torch.Tensor(test_input.copy()).permute(2, 0, 1).unsqueeze_(0)
-                        test_input = test_input.cuda()
-                        test_reference = torch.Tensor(test_reference.copy()).permute(2, 0, 1).unsqueeze_(0)
-                        test_reference = test_reference.cuda()
-                        tmp_output = np.clip(
-                            np.squeeze(self.model(test_input, test_reference).cpu().detach().permute(0, 2, 3, 1).numpy()), 0, 1)
-                        tmp_output = np.rot90(tmp_output, -r) if r < 4 else np.rot90(np.fliplr(tmp_output), -r)
-                        for bp_iter in range(self.conf.back_projection_iters[self.sf_ind]):
-                            tmp_output = back_projection(tmp_output, k, down_kernel=self.kernel,
-                                                         up_kernel=self.conf.upscale_method, sf=self.sf)
-                        outputs.append(tmp_output)
-                    almost_final_sr = np.median(outputs, 0)
-
-                    xxx = almost_final_sr
-                else:
-                    test_input = interpolated_lr_son
-                    test_reference = hr_cousin
-                    test_input = torch.Tensor(test_input).permute(2, 0, 1).unsqueeze_(0)
-                    test_input = test_input.cuda()
-                    test_reference = torch.Tensor(test_reference).permute(2, 0, 1).unsqueeze_(0)
-                    test_reference = test_reference.cuda()
-                    xxx = np.clip(np.squeeze(self.model(test_input, test_reference).cpu().detach().permute(0, 2, 3, 1).numpy()), 0, 1)
-                #plt.imshow(xxx)
-                #plt.show()
-                divide[int(self.conf.scale_factors[0][1] * yyyyy):int(self.conf.scale_factors[0][1] * yyyyy) + self.conf.crop_size, int(self.conf.scale_factors[0][0] * xxxxx):int(self.conf.scale_factors[0][0] * xxxxx) + self.conf.crop_size] += ones
-                output[int(self.conf.scale_factors[0][1] * yyyyy):int(self.conf.scale_factors[0][1] * yyyyy) + self.conf.crop_size, int(self.conf.scale_factors[0][0] * xxxxx):int(self.conf.scale_factors[0][0] * xxxxx) + self.conf.crop_size] += xxx
-                ###
-        #print(divide)
-        output = np.divide(output, divide)
-        #plt.imshow(output)
-        #plt.show()
-
-        return output
 
 
     def forward_pass_ver0517(self, lr_son, hr_father_shape=None, final_test_switch=True, rotation_Var=0):
@@ -503,11 +364,7 @@ class ZSSR:
                     k = lr_son[i:i + int(self.conf.crop_size/self.conf.scale_factors[0][0]), j:j + int(self.conf.crop_size/self.conf.scale_factors[0][1])]
                     yyyyy = int(i)
                     xxxxx = int(j)
-                #rotation_y, rotation_x = index_rot(yyyyy,xxxxx,M,N,rotation_Var)
-                #if rotation_y +128 >= self.input.shape[0] :
-                #    rotation_y = rotation_y-128
-                #if rotation_x + 128 >= self.input.shape[1]:
-                #    rotation_x = rotation_x-128
+
                 width_idx, height_idx, HARD_SWITCH = self.js_PM.test_run(xxxxx, yyyyy)
                 if HARD_SWITCH == False:
                     ending_hegiht = int(height_idx + int(self.conf.crop_size/2))
@@ -526,17 +383,11 @@ class ZSSR:
                         patch = lr_son[ending_hegiht-self.conf.crop_size:ending_hegiht,0:self.conf.crop_size]
                     else :
                         patch = lr_son[ending_hegiht-self.conf.crop_size:ending_hegiht,ending_width-self.conf.crop_size:ending_width]
-                    #patch = lr_son[ending_hegiht - 128:ending_hegiht, ending_width - 128:ending_width]
+                    
                 else :
                     patch = imresize(k, scale_factor=self.sf, kernel=self.conf.upscale_method)
-                #patch = imresize(patch, scale_factor=1, kernel='cubic')
+
                 hr_cousin = patch
-                #print('x idx , y idx : %d , %d'%(rotation_x,rotation_y))
-                #print('width_idx , height_idx : %d , %d'%(width_idx, height_idx))
-                #plt.imshow(k)
-                #plt.show()
-                #plt.imshow(patch)
-                #plt.show()
                 interpolated_lr_son = imresize(k, self.sf, (self.conf.crop_size, self.conf.crop_size), self.conf.upscale_method)
 
                 test_input = interpolated_lr_son
@@ -546,173 +397,16 @@ class ZSSR:
                 test_reference = torch.Tensor(test_reference).permute(2, 0, 1).unsqueeze_(0)
                 test_reference = test_reference.cuda()
                 xxx = np.clip(np.squeeze(self.model(test_input, test_reference).cpu().detach().permute(0, 2, 3, 1).numpy()), 0, 1)
-                #plt.imshow(xxx)
-                #plt.show()
+
                 divide[int(self.conf.scale_factors[0][1] * yyyyy):int(self.conf.scale_factors[0][1] * yyyyy) + self.conf.crop_size, int(self.conf.scale_factors[0][0] * xxxxx):int(self.conf.scale_factors[0][0] * xxxxx) + self.conf.crop_size] += ones
                 output[int(self.conf.scale_factors[0][1] * yyyyy):int(self.conf.scale_factors[0][1] * yyyyy) + self.conf.crop_size, int(self.conf.scale_factors[0][0] * xxxxx):int(self.conf.scale_factors[0][0] * xxxxx) + self.conf.crop_size] += xxx
                 ###
-        #print(divide)
+
         output = np.divide(output, divide)
-        #plt.imshow(output)
-        #plt.show()
+
 
         return output
 
-    ##################################################끝부분 처
-    def forwafsdfsafsfs(self, lr_son, hr_father_shape=None, rotK=0):  # k 값을 받아서 k값에 따른 각도와 플립 계산 후 인덱스도 변경.
-        [M, N, _] = lr_son.shape
-        output = np.zeros((int(2*M),int(2*N),3))
-        divide = np.zeros((int(2*M),int(2*N),3))
-        ones = np.ones((128,128,3))
-        #hr_cousin = torch.Tensor(hr_cousin).permute(2, 0, 1).unsqueeze_(0)
-        #hr_cousin = hr_cousin.cuda()
-        for i in range(0,M,60):
-            for j in range(0, N, 60):
-                if i + 64 > M and j + 64 > N:
-                    k = lr_son[M-64:M, N-64:N]
-                    yyyyy = M-64
-                    xxxxx = N-64
-                elif i + 64 > M:
-                    k = lr_son[M-64:M,j:j+64]
-                    yyyyy = M-64
-                    xxxxx = j
-                elif j + 64 > N :
-                    k = lr_son[i:i+64, N-64:N]
-                    yyyyy = i
-                    xxxxx = N-64
-                else :
-                    k = lr_son[i:i+64, j:j+64]
-                    yyyyy = i
-                    xxxxx = j
-                ################
-                if rotK%8 == 0:
-                    shift_y = yyyyy#i
-                    shift_x = xxxxx#j
-                elif rotK%8 == 1:
-                    shift_y = xxxxx
-                    shift_x = self.www-(yyyyy+64)
-                elif rotK%8 == 2:
-                    shift_y = self.hhh-(yyyyy+64)
-                    shift_x = self.www-(xxxxx+64)
-                elif rotK%8 == 3:
-                    shift_y = self.hhh-(xxxxx+64)
-                    shift_x = yyyyy
-                elif rotK%8 == 4:
-                    shift_y = yyyyy
-                    shift_x = self.www-(xxxxx+64)
-                elif rotK%8 == 5:
-                    shift_y = self.hhh-(xxxxx+64)
-                    shift_x = self.www-(yyyyy+64)
-                elif rotK%8 == 6:
-                    shift_y = self.hhh-(yyyyy+64)
-                    shift_x = xxxxx
-                elif rotK%8 == 7:
-                    shift_y = xxxxx
-                    shift_x = yyyyy
-
-                rot0_x, rot0_y = self.js_PM.test_run(shift_x, shift_y)
-                #double_1d_idx, rot0_x,rot0_y , _, _ = self.js_PM.run(shift_x, shift_y)
-                #####
-                if rotK%8 == 0:
-                    height_idx = rot0_y
-                    width_idx = rot0_x
-                elif rotK%8 == 1:
-                    height_idx = self.www-rot0_x - 128
-                    width_idx = rot0_y
-                elif rotK%8 == 2:
-                    height_idx = self.hhh-rot0_y - 128
-                    width_idx = self.www-rot0_x - 128
-                elif rotK%8 == 3:
-                    height_idx = rot0_x
-                    width_idx = self.hhh-rot0_y -128
-                elif rotK%8 == 4:
-                    height_idx = rot0_y
-                    width_idx = self.www-rot0_x - 128
-                elif rotK%8 == 5:
-                    height_idx = self.www-rot0_x - 128
-                    width_idx = self.hhh-rot0_y - 128
-                elif rotK%8 == 6:
-                    height_idx = self.hhh-rot0_y - 128
-                    width_idx = rot0_x
-                elif rotK%8 == 7:
-                    height_idx = rot0_x
-                    width_idx = rot0_y
-                #print(height_idx,width_idx)
-                plt.imshow(k)
-                plt.show()
-                ending_hegiht = height_idx + 128
-                ending_width = width_idx + 128
-                if height_idx + 128 > lr_son.shape[0]:
-                    ending_hegiht = lr_son.shape[0]
-                if width_idx + 128 > lr_son.shape[1]:
-                    ending_width = lr_son.shape[1]
-                patch = lr_son[ending_hegiht-128:ending_hegiht, ending_width-128:ending_width]
-                hr_cousin = patch
-                #print(ending_hegiht, ending_width)
-                #print(hr_cousin.shape)
-                plt.imshow(hr_cousin)
-                plt.show()
-
-                hr_cousin = torch.Tensor(hr_cousin).permute(2,0,1).unsqueeze_(0)
-                hr_cousin = hr_cousin.cuda()
-
-                #################
-                interpolated_lr_son = imresize(k, self.sf, (128,128), self.conf.upscale_method)
-                if self.Y == True:
-                    interpolated_lr_son = (torch.Tensor(interpolated_lr_son)).unsqueeze_(0).unsqueeze_(0)
-                else:
-                    interpolated_lr_son = (torch.Tensor(interpolated_lr_son).permute(2, 0, 1)).unsqueeze_(0)
-                if self.cuda:
-                    interpolated_lr_son = interpolated_lr_son.cuda()
-                xxx = np.clip(np.squeeze(self.model(interpolated_lr_son, hr_cousin).cpu().detach().permute(0, 2, 3, 1).numpy()),0, 1)
-                output[(2*yyyyy):(2*yyyyy)+128,(2*xxxxx):(2*xxxxx)+128] += xxx
-                divide[(2*yyyyy):(2*yyyyy)+128,(2*xxxxx):(2*xxxxx)+128] += ones
-                ###
-        output = np.divide(output,divide)
-        #print(divide)
-        #plt.imshow(output)
-        #plt.show()
-
-        return output
-######################################################ㄹ
-
-
-    def forward_pass_sliding_GT_TEST(self, lr_son, hr_father_shape=None, GT_IMG=None, rotK=0):  # k 값을 받아서 k값에 따른 각도와 플립 계산 후 인덱스도 변경.
-        [M, N, _] = lr_son.shape
-        output = np.zeros((int(2*M),int(2*N),3))
-        divide = np.zeros((int(2*M),int(2*N),3))
-        ones = np.ones((128,128,3))
-        #hr_cousin = torch.Tensor(hr_cousin).permute(2, 0, 1).unsqueeze_(0)
-        #hr_cousin = hr_cousin.cuda()
-        for i in range(0,M,8):
-            for j in range(0, N, 8):
-                if i + 64 > M or j + 64 > N:
-                    continue
-                else :
-                    k = lr_son[i:i+64, j:j+64]
-                    patch = GT_IMG[i:i+128, j:j+128]
-                hr_cousin = patch.copy()
-                hr_cousin = torch.Tensor(hr_cousin).permute(2,0,1).unsqueeze_(0)
-                hr_cousin = hr_cousin.cuda()
-
-                #################
-                interpolated_lr_son = imresize(k, self.sf, (128,128), self.conf.upscale_method)
-                if self.Y == True:
-                    interpolated_lr_son = (torch.Tensor(interpolated_lr_son)).unsqueeze_(0).unsqueeze_(0)
-                else:
-                    interpolated_lr_son = (torch.Tensor(interpolated_lr_son).permute(2, 0, 1)).unsqueeze_(0)
-                if self.cuda:
-                    interpolated_lr_son = interpolated_lr_son.cuda()
-                xxx = np.clip(np.squeeze(self.model(interpolated_lr_son, hr_cousin).cpu().detach().permute(0, 2, 3, 1).numpy()),0, 1)
-                output[(2*i):(2*i)+128,(2*j):(2*j)+128] += xxx
-                divide[(2*i):(2*i)+128,(2*j):(2*j)+128] += ones
-                ###
-        output = np.divide(output,divide)
-        #print(divide)
-        #plt.imshow(output)
-        #plt.show()
-
-        return output
 
     def learning_rate_policy(self):
         # fit linear curve and check slope to determine whether to do nothing, reduce learning rate or finish
@@ -812,84 +506,6 @@ class ZSSR:
         if self.conf.plot_losses:
             self.plot()
 
-    def train(self):
-        # def loss and optimizer
-        criterion = nn.L1Loss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
-        # main training loop
-        for self.iter in range(self.conf.max_iters):
-            # Use augmentation from original input image to create current father.
-            # If other scale factors were applied before, their result is also used (hr_fathers_in)
-            self.hr_father, self.shift, shift_back_from_center, shear_mat, rotation_mat, scale_mat, shift_to_center_mat, theta = random_augment(ims=self.hr_fathers_sources,
-                                            base_scales=[1.0] + self.conf.scale_factors,
-                                            leave_as_is_probability=self.conf.augment_leave_as_is_probability,
-                                            no_interpolate_probability=self.conf.augment_no_interpolate_probability,
-                                            min_scale=self.conf.augment_min_scale,
-                                            max_scale=([1.0] + self.conf.scale_factors)[
-                                                len(self.hr_fathers_sources) - 1],
-                                            allow_rotation=self.conf.augment_allow_rotation,
-                                            scale_diff_sigma=self.conf.augment_scale_diff_sigma,
-                                            shear_sigma=self.conf.augment_shear_sigma,
-                                            crop_size=self.conf.crop_size)
-            #print(self.shift)
-            if self.Reference == True:
-                double_1d_idx,_,_, width_idx, height_idx =self.js_PM.run(self.shift[0],self.shift[1])
-                #double_1d_idx,width_idx,height_idx, _, _ =self.js_PM.run(self.shift[0],self.shift[1])
-                shift_mat_mine = np.array([[1, 0, - width_idx],
-                          [0, 1, - height_idx],
-                          [0, 0, 1]])
-                if theta == 3 * pi / 2 or theta == 1 * pi / 2:
-                    dst = np.clip(warpPerspective(self.hr_fathers_sources[0],
-                                                    shift_back_from_center.dot(shift_mat_mine).dot(shear_mat).dot(scale_mat).dot(shift_to_center_mat),
-                                                    (self.conf.crop_size, self.conf.crop_size), flags=INTER_CUBIC), 0,1)
-                    gak = theta * 180 / pi
-                    rot_mat = cv2.getRotationMatrix2D((int(self.conf.crop_size / 2), int(self.conf.crop_size / 2)), gak, 1)
-                    patch = cv2.warpAffine(dst, rot_mat, (self.conf.crop_size, self.conf.crop_size))
-                else :
-                    patch  = np.clip(warpPerspective(self.hr_fathers_sources[0],shift_back_from_center.dot(shift_mat_mine).dot(shear_mat).dot(rotation_mat).dot(scale_mat).dot(shift_to_center_mat),
-                                                    (self.conf.crop_size, self.conf.crop_size), flags=INTER_CUBIC),0,1)
-            else :
-                patch = None
-
-           #print('******************************************', self.shift)
-            if self.iter % 1000 == 0:
-                plt.imshow(self.hr_father)
-                plt.show()
-                plt.imshow(patch)
-                plt.show()
-                plt.imsave("%05d_hr_father.png"%(iter),self.hr_father)
-                plt.imsave("%05d_cousin.png"%(iter),patch)
-            #print('***************************************************************************************')
-
-            # Get lr-son from hr-father
-            self.lr_son = self.father_to_son(self.hr_father)
-            # should convert input and output to torch tensor
-            #pixels = patch.getdata()
-            #if cv2.countNonZero(patch) < 128*64 :
-            #    patch = cv2.resize(self.lr_son, (128,128), cv2.INTER_CUBIC)
-            # run network forward and back propagation, one iteration (This is the heart of the training)
-            if self.Reference == True:
-                self.train_output = self.forward_backward_pass_patch(self.lr_son, self.hr_father, criterion, optimizer, patch)
-            else:
-                self.train_output = self.forward_backward_pass(self.lr_son, self.hr_father, criterion, optimizer)
-
-            # Display info and save weights
-            if not self.iter % self.conf.display_every:
-                print('sf:', self.sf * self.base_sf, ', iteration: ', self.iter, ', loss:  %.7f'% self.loss[self.iter])
-
-            # Test network
-            if self.conf.run_test and (not self.iter % self.conf.run_test_every):
-                if self.Reference == True:
-                    self.quick_test_patch(patch)
-                else:
-                    self.quick_test()
-            # Consider changing learning rate or stop according to iteration number and losses slope
-            self.learning_rate_policy()
-
-            # stop when minimum learning rate was passed
-            if self.learning_rate < self.conf.min_learning_rate:
-                break
-
 
     def train_MINE(self):
         # def loss and optimizer
@@ -930,28 +546,13 @@ class ZSSR:
                 else :
                     #print('hard_th******************************************')
                     patch =  imresize(self.hr_father, self.sf , kernel=self.conf.upscale_method)
-                #patch = Add_jpg_compression(img=patch)
             else :
                 patch = None
 
-           #print('******************************************', self.shift)
-            #print('***************************************************************************************')
-            #print(patch)
+
             # Get lr-son from hr-father
             self.lr_son = self.father_to_son(self.hr_father)
-            #if self.iter % 200 == 0:
-            #print('shift idx: %d, %d'%(self.shift[0],self.shift[1]))
-            #print('height idx , width idx : %d , %d'%(height_idx, width_idx))
-            #plt.imshow(self.hr_father)
-            #plt.show()
-            #plt.imshow(patch)
-            #plt.show()
-            #    plt.imsave("%s/Patches/%s_%05d_hr_father.png"%(self.conf.result_path, os.path.basename(self.file_name)[:-4],self.iter),self.hr_father,vmin=0, vmax=1)
-            #    plt.imsave("%s/Patches/%s_%05d_cousin.png"%(self.conf.result_path, os.path.basename(self.file_name)[:-4],self.iter),patch,vmin=0, vmax=1)
-            # should convert input and output to torch tensor
-            #pixels = patch.getdata()
-            #if cv2.countNonZero(patch) < 128*64 :
-            #    patch = cv2.resize(self.lr_son, (128,128), cv2.INTER_CUBIC)
+            
             # run network forward and back propagation, one iteration (This is the heart of the training)
             if self.Reference == True:
                 self.train_output = self.forward_backward_pass_patch(self.lr_son, self.hr_father, criterion, optimizer, patch)
@@ -1036,22 +637,6 @@ class ZSSR:
         # Add colors to result image in case net was activated only on grayscale
         return self.final_sr
 
-    def final_test_MINE(self):
-
-        test_input = self.fake_input
-
-        almost_final_sr = self.forward_pass_ver21(test_input,final_test_switch=True)
-        # Again back projection for the final fused result
-        for bp_iter in range(self.conf.back_projection_iters[self.sf_ind]):
-            almost_final_sr = back_projection(almost_final_sr, self.fake_input, down_kernel=self.kernel,
-                                              up_kernel=self.conf.upscale_method, sf=self.sf)
-
-        # Now we can keep the final result (in grayscale case, colors still need to be added, but we don't care
-        # because it is done before saving and for every other purpose we use this result)
-        self.final_sr = almost_final_sr
-
-        # Add colors to result image in case net was activated only on grayscale
-        return self.final_sr
 
     def base_change(self):
         # If there is no base scale large than the current one get out of here
