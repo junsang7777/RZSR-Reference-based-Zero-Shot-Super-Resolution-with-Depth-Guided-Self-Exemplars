@@ -519,7 +519,7 @@ class Patchmatch_VGG_MATCHING:
 
         self.N_BIN = 5
         #self.hist_threshold = hist_Threshold(self.N_BIN)
-        self.hist_threshold = [60,100,140,170]
+        self.hist_threshold = [45,120,160,190]
 
         self.bin = {}  # for x0.5 scale bin
         ################################################################################################
